@@ -2,9 +2,9 @@ apply plugin: 'com.android.library'
 apply plugin: 'kotlin-android'
 
 ext {
-    PUBLISH_GROUP_ID = 'com.arcrobotics'
+    PUBLISH_GROUP_ID = 'com.arcrobotics.ftclib'
     PUBLISH_ARTIFACT_ID = 'ftclib'
-    PUBLISH_VERSION = '2.1.1'
+    PUBLISH_VERSION = '2.1.1-SNAPSHOT'
 }
 
 android {
@@ -14,9 +14,10 @@ android {
 
     defaultConfig {
         minSdkVersion 24
+        //noinspection ExpiredTargetSdkVersion
         targetSdkVersion 28
         versionCode 1
-        versionName 'v2.1.1'
+        versionName 'v' + PUBLISH_VERSION // ie: "v2.1.1"
 
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         consumerProguardFiles 'consumer-rules.pro'
@@ -66,4 +67,4 @@ dependencies {
     implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk8:$kotlin_version"
 }
 
-apply from: '../release-aar.gradle'
+apply from: '../publish.gradle'

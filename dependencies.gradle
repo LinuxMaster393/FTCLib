@@ -9,7 +9,7 @@ dependencies {
     compileOnly 'androidx.appcompat:appcompat:1.2.0'
 }
 
-configurations.all {
+configurations.configureEach {
     resolutionStrategy {
         force 'androidx.core:core-ktx:1.6.0'
     }

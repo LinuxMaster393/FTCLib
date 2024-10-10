@@ -1,0 +1,76 @@
+apply plugin: "maven-publish"
+apply plugin: "signing"
+
+tasks.register('dokkaJar', Jar) {
+    dependsOn dokkaHtml
+    from dokkaHtml
+    archiveClassifier = 'html-docs'
+
+}
+
+tasks.register('sourcesJar', Jar) {
+    archiveClassifier = 'sources'
+    from android.sourceSets.main.java.srcDirs
+}
+
+afterEvaluate {
+    publishing {
+        publications {
+            release(MavenPublication) {
+                from components.release
+                artifact sourcesJar
+                artifact dokkaJar
+
+                groupId project.PUBLISH_GROUP_ID
+                artifactId project.PUBLISH_ARTIFACT_ID
+                version project.PUBLISH_VERSION
+
+                // Self-explanatory metadata for the most part
+                pom {
+                    name = project.PUBLISH_ARTIFACT_ID
+                    description = 'Broad FTC library for all things software.'
+                    url = 'https://github.com/FTCLib/FTCLib'
+
+                    licenses {
+                        license {
+                            name = 'Custom License'
+                            url = 'https://github.com/FTCLib/FTCLib/raw/refs/heads/master/LICENSE.md'
+                        }
+                    }
+                    developers {
+                        developer {
+                            name = 'FTCLib Dev Team'
+                            email = 'ftclib.devs@gmail.com'
+                            organization = 'FTCLib'
+                            organizationUrl = 'https://ftclib.org/'
+                        }
+                    }
+                    scm {
+                        connection = 'scm:git:ssh://github.com:FTCLib/FTCLib.git'
+                        url = 'https://github.com/FTCLib/FTCLib/tree/master'
+                    }
+                }
+            }
+        }
+
+        repositories {
+            maven {
+                name = "MavenCentral"
+
+                def releasesRepoUrl = "https://s01.oss.sonatype.org/service/local/staging/deploy/maven2/"
+                def snapshotsRepoUrl = "https://s01.oss.sonatype.org/content/repositories/snapshots/"
+                url = version.endsWith('SNAPSHOT') ? snapshotsRepoUrl : releasesRepoUrl
+
+                // The username and password from local.properties or user gradle.properties
+                credentials {
+                    username = hasProperty("ossrh.username") ? findProperty("ossrh.username") : ""
+                    password = hasProperty("ossrh.password") ? findProperty("ossrh.password") : ""
+                }
+            }
+        }
+    }
+
+    signing {  // To set up signing, see https://docs.gradle.org/current/userguide/signing_plugin.html
+        sign publishing.publications.release
+    }
+}

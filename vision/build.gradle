@@ -1,0 +1,23 @@
+apply plugin: 'com.android.library'
+apply plugin: 'kotlin-android'
+
+ext {
+    PUBLISH_GROUP_ID = 'com.arcrobotics.ftclib'
+    PUBLISH_ARTIFACT_ID = 'vision'
+    PUBLISH_VERSION = '2.1.0-SNAPSHOT'
+}
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    api 'org.openftc:easyopencv:1.5.3'
+    implementation 'org.openftc:apriltag:1.1.1'
+    implementation "androidx.core:core-ktx:1.6.0"
+    implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk8:$kotlin_version"
+}
+
+
+apply from: '../dependencies.gradle'
+apply from: '../publish.gradle'
