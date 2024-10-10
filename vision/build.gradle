@@ -5,6 +5,7 @@ ext {
     PUBLISH_GROUP_ID = 'com.arcrobotics.ftclib'
     PUBLISH_ARTIFACT_ID = 'vision'
     PUBLISH_VERSION = '2.1.0-SNAPSHOT'
+    PUBLISH_DESCRIPTION = 'Broad FTC library for all things software.'
 }
 
 repositories {

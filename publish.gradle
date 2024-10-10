@@ -28,7 +28,7 @@ afterEvaluate {
                 // Self-explanatory metadata for the most part
                 pom {
                     name = project.PUBLISH_ARTIFACT_ID
-                    description = 'Broad FTC library for all things software.'
+                    description = project.PUBLISH_DESCRIPTION
                     url = 'https://github.com/FTCLib/FTCLib'
 
                     licenses {

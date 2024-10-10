@@ -5,11 +5,12 @@ ext {
     PUBLISH_GROUP_ID = 'com.arcrobotics.ftclib'
     PUBLISH_ARTIFACT_ID = 'ftclib'
     PUBLISH_VERSION = '2.1.1-SNAPSHOT'
+    PUBLISH_DESCRIPTION = 'Broad FTC library for all things software.'
 }
 
 android {
-    compileSdkVersion 28
-    buildToolsVersion '29.0.2'
+    compileSdk 28
+//    buildToolsVersion '29.0.2'
 
 
     defaultConfig {
