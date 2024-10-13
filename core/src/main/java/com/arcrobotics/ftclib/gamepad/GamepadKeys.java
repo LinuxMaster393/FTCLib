@@ -13,8 +13,8 @@ public class GamepadKeys {
         LEFT_STICK_BUTTON, RIGHT_STICK_BUTTON
     }
 
-    public enum Trigger {
-        LEFT_TRIGGER, RIGHT_TRIGGER
+    public enum Axis {
+        LEFT_TRIGGER, RIGHT_TRIGGER, LEFT_STICK_X, RIGHT_STICK_X, LEFT_STICK_Y, RIGHT_STICK_Y
     }
 
 }

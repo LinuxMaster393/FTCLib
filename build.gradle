@@ -46,7 +46,7 @@ subprojects {
                     url.set(new URL("https://ftctechnh.github.io/ftc_app/doc/javadoc/"))
                 }
                 externalDocumentationLink {
-                    url.set(new URL("https://javadoc.io/doc/org.openftc/easyopencv/1.5.1/"))
+                    url.set(new URL("https://javadoc.io/doc/org.openftc/easyopencv/latest/"))
                 }
                 externalDocumentationLink {
                     url.set(new URL("https://javadoc.io/doc/com.arcrobotics/ftclib/latest/"))

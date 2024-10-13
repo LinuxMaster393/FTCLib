@@ -1,7 +1,14 @@
 package com.arcrobotics.ftclib.gamepad;
 
+import android.util.Log;
+
+import androidx.annotation.FloatRange;
+import androidx.annotation.IntRange;
+import androidx.annotation.NonNull;
+
 import com.arcrobotics.ftclib.command.button.GamepadButton;
 import com.arcrobotics.ftclib.gamepad.GamepadKeys.Button;
+import com.arcrobotics.ftclib.gamepad.GamepadKeys.Axis;
 import com.qualcomm.robotcore.hardware.Gamepad;
 
 import java.util.HashMap;
@@ -11,42 +18,59 @@ import java.util.HashMap;
  * and other control processors.
  */
 public class GamepadEx {
+    private static final String TAG = "com.arcrobotics.ftclib.gamepad.GamepadEx";
 
     /**
-     * The retrievable gamepad object
+     * FTC's {@link Gamepad} object.
      */
-    public Gamepad gamepad;
+    @NonNull
+    public final Gamepad gamepad;
 
-    private HashMap<Button, ButtonReader> buttonReaders;
-    private HashMap<Button, GamepadButton> gamepadButtons;
+    private final HashMap<Button, ButtonReader> buttonReaders;
+    private final HashMap<Axis, AxisReader> axisReaders;
+    private final HashMap<Button, GamepadButton> gamepadButtons;
+    
+    @IntRange(from = -1, to = 1)
+    private int negateYAxis;
 
-    private final Button[] buttons = {
-            Button.Y, Button.X, Button.A, Button.B, Button.LEFT_BUMPER, Button.RIGHT_BUMPER, Button.BACK,
-            Button.START, Button.DPAD_UP, Button.DPAD_DOWN, Button.DPAD_LEFT, Button.DPAD_RIGHT,
-            Button.LEFT_STICK_BUTTON, Button.RIGHT_STICK_BUTTON
-    };
 
     /**
-     * The constructor, that contains the gamepad object from the
-     * opmode.
+     * Creates a {@link GamepadEx} from a {@link Gamepad} object, with an axis threshold of 0.05
      *
-     * @param gamepad the gamepad object from the opmode
+     * @param gamepad The Gamepad object from the {@link com.qualcomm.robotcore.eventloop.opmode.OpMode OpMode}
      */
-    public GamepadEx(Gamepad gamepad) {
-        this.gamepad = gamepad;
-        buttonReaders = new HashMap<>();
-        gamepadButtons = new HashMap<>();
-        for (Button button : buttons) {
-            buttonReaders.put(button, new ButtonReader(this, button));
-            gamepadButtons.put(button, new GamepadButton(this, button));
-        }
+    public GamepadEx(@NonNull Gamepad gamepad) {
+        this(gamepad, 0.05);
     }
 
     /**
-     * @param button the button object
-     * @return the boolean value as to whether the button is active or not
+     * Creates a {@link GamepadEx} from a {@link Gamepad} object
+     *
+     * @param gamepad The Gamepad object from the {@link com.qualcomm.robotcore.eventloop.opmode.OpMode OpMode}
+     * @param axisThreshold The threshold to set the {@link AxisReader} objects to.
      */
-    public boolean getButton(Button button) {
+    public GamepadEx(@NonNull Gamepad gamepad, @FloatRange(from = -1.0, to = 1.0) double axisThreshold) {
+        this.gamepad = gamepad;
+        buttonReaders = new HashMap<>();
+        axisReaders = new HashMap<>();
+        gamepadButtons = new HashMap<>();
+        for (Button button : Button.values()) {
+            buttonReaders.put(button, new ButtonReader(this, button));
+            gamepadButtons.put(button, new GamepadButton(this, button));
+        }
+        for (Axis axis : Axis.values()) {
+            axisReaders.put(axis, new AxisReader(this, axis, axisThreshold));
+        }
+        negateYAxis = 1;
+    }
+
+    /**
+     * Returns the button value from the raw {@link Gamepad} object corresponding to the {@link Button} value passed.
+     * 
+     * @param button The {@link Button} enum value.
+     * @return The boolean value returned from the gamepad button in question.
+     */
+    public boolean getButton(@NonNull Button button) {
         boolean buttonValue = false;
         switch (button) {
             case A:
@@ -91,113 +115,289 @@ public class GamepadEx {
             case RIGHT_STICK_BUTTON:
                 buttonValue = gamepad.right_stick_button;
                 break;
-            default:
-                buttonValue = false;
-                break;
         }
         return buttonValue;
     }
 
     /**
-     * @param trigger the trigger object
-     * @return the value returned by the trigger in question
+     * Returns the axis value from the raw {@link Gamepad} object corresponding to the {@link Axis} value passed.
+     * 
+     * @param axis The {@link Axis} enum value.
+     * @return The double value returned from the gamepad axis in question.
      */
-    public double getTrigger(GamepadKeys.Trigger trigger) {
-        double triggerValue = 0;
-        switch (trigger) {
+    public double getAxis(@NonNull Axis axis) {
+        double axisValue = 0;
+        switch (axis) {
             case LEFT_TRIGGER:
-                triggerValue = gamepad.left_trigger;
+                axisValue = gamepad.left_trigger;
                 break;
             case RIGHT_TRIGGER:
-                triggerValue = gamepad.right_trigger;
+                axisValue = gamepad.right_trigger;
                 break;
-            default:
+            case LEFT_STICK_X:
+                axisValue = gamepad.left_stick_x;
+                break;
+            case LEFT_STICK_Y:
+                axisValue = gamepad.left_stick_y;
+                break;
+            case RIGHT_STICK_X:
+                axisValue = gamepad.right_stick_x;
+                break;
+            case RIGHT_STICK_Y:
+                axisValue = gamepad.right_stick_y;
                 break;
         }
-        return triggerValue;
+        return axisValue;
     }
 
     /**
-     * @return the y-value on the left analog stick
+     * Convenience method for {@link GamepadEx#getAxis(Axis) GamepadEx.getAxis(GamepadKeys.Axis.LEFT_TRIGGER) }
+     *
+     * @return The value returned by the left trigger.
+     */
+    public double getLeftTrigger() {
+        return getAxis(Axis.LEFT_TRIGGER);
+    }
+
+    /**
+     * Convenience method for {@link GamepadEx#getAxis(Axis) GamepadEx.getAxis(GamepadKeys.Axis.RIGHT_TRIGGER) }
+     *
+     * @return The value returned by the right trigger.
+     */
+    public double getRightTrigger() {
+        return getAxis(Axis.RIGHT_TRIGGER);
+    }
+
+    /**
+     * Convenience method for {@link GamepadEx#getAxis(Axis) GamepadEx.getAxis(GamepadKeys.Axis.LEFT_STICK_Y) },
+     * with negation if configured to using {@link GamepadEx#setNegateYAxis(boolean)}
+     *
+     * @return The Y value on the left joystick.
+     * @see GamepadEx#setNegateYAxis(boolean)
      */
     public double getLeftY() {
-        return -gamepad.left_stick_y;
+        return getAxis(Axis.LEFT_STICK_Y) * negateYAxis;
     }
 
     /**
-     * @return the y-value on the right analog stick
+     * Convenience method for {@link GamepadEx#getAxis(Axis) GamepadEx.getAxis(GamepadKeys.Axis.RIGHT_STICK_Y) },
+     * with negation if configured to using {@link GamepadEx#setNegateYAxis(boolean)}
+     *
+     * @return The Y value on the right joystick.
+     * @see GamepadEx#setNegateYAxis(boolean)
      */
     public double getRightY() {
-        return gamepad.right_stick_y;
+        return getAxis(Axis.LEFT_STICK_Y) * negateYAxis;
     }
 
     /**
-     * @return the x-value on the left analog stick
+     * Negate the joystick Y axis, as the hardware convention is joystick down is -Y.
+     *
+     * @param negate Whether we should negate the joystick Y axis or not.
+     * @see GamepadEx#isNegatingYAxis()
+     */
+    public void setNegateYAxis(boolean negate) {
+        negateYAxis = negate ? -1 : 1;
+    }
+
+    /**
+     * Returns whether we are negating the joystick Y axis
+     *
+     * @return Whether we are negating the joystick Y axis
+     * @see GamepadEx#setNegateYAxis(boolean)
+     */
+    public boolean isNegatingYAxis() {
+        return negateYAxis == -1;
+    }
+
+    /**
+     * Convenience method for {@link GamepadEx#getAxis(Axis) GamepadEx.getAxis(GamepadKeys.Axis.LEFT_STICK_X) }.
+     *
+     * @return The X value on the left joystick.
      */
     public double getLeftX() {
-        return gamepad.left_stick_x;
+        return getAxis(Axis.LEFT_STICK_X);
     }
 
     /**
-     * @return the x-value on the right analog stick
+     * Convenience method for {@link GamepadEx#getAxis(Axis) GamepadEx.getAxis(GamepadKeys.Axis.RIGHT_STICK_X) }
+     *
+     * @return The X value on the right joystick.
      */
     public double getRightX() {
-        return gamepad.right_stick_x;
+        return getAxis(Axis.RIGHT_STICK_X);
     }
 
     /**
-     * Returns if the button was just pressed
+     * Returns true if this is the first loop that the button was pressed, i.e, it was just pressed.
      *
-     * @param button the desired button to read from
-     * @return if the button was just pressed
+     * @param button The desired button to read from.
+     * @return If the button was just pressed.
+     * @see GamepadEx#readButtons()
      */
     public boolean wasJustPressed(Button button) {
+        //noinspection DataFlowIssue
         return buttonReaders.get(button).wasJustPressed();
     }
 
     /**
-     * Returns if the button was just released
+     * Returns true if this is the first loop that the axis is past the threshold, i.e, it was just pressed.
      *
-     * @param button the desired button to read from
-     * @return if the button was just released
+     * @param axis The desired axis to read from.
+     * @return If the axis was just pressed.
+     * @see GamepadEx#readAxis()
+     */
+    public boolean wasJustPressed(Axis axis) {
+        //noinspection DataFlowIssue
+        return axisReaders.get(axis).wasJustPressed();
+    }
+
+    /**
+     * Returns true if this is the first loop that the button was not pressed, i.e, it was just released.
+     *
+     * @param button The desired button to read from.
+     * @return If the button was just released.
+     * @see GamepadEx#readButtons()
      */
     public boolean wasJustReleased(Button button) {
+        //noinspection DataFlowIssue
         return buttonReaders.get(button).wasJustReleased();
     }
 
     /**
-     * Updates the value for each {@link ButtonReader}.
-     * Call this once in your loop.
+     * Returns true if this is the first loop that the axis is not past the threshold, i.e, it was just released.
+     *
+     * @param axis The desired axis to read from.
+     * @return If the axis was just released.
+     * @see GamepadEx#readAxis()
+     */
+    public boolean wasJustReleased(Axis axis) {
+        //noinspection DataFlowIssue
+        return axisReaders.get(axis).wasJustReleased();
+    }
+
+    /**
+     * Returns if the button is pressed. Same as {@link GamepadEx#getButton(Button)},
+     * except it uses the {@link ButtonReader}
+     *
+     * @param button The desired button to read from.
+     * @return If the button is down.
+     * @see GamepadEx#readButtons()
+     */
+    public boolean isDown(Button button) {
+        //noinspection DataFlowIssue
+        return buttonReaders.get(button).isDown();
+    }
+
+    /**
+     * Returns if the axis is past the threshold.
+     *
+     * @param axis The desired axis to read from.
+     * @return If the axis is down.
+     * @see GamepadEx#readAxis()
+     */
+    public boolean isDown(Axis axis) {
+        //noinspection DataFlowIssue
+        return axisReaders.get(axis).isDown();
+    }
+
+    /**
+     * Returns true if the button's state has just changed, i.e, it has either just been pressed, or just been released.
+     *
+     * @param button The desired button to read from.
+     * @return If the button's state has just changed.
+     * @see GamepadEx#readButtons()
+     */
+    public boolean stateJustChanged(Button button) {
+        //noinspection DataFlowIssue
+        return buttonReaders.get(button).stateJustChanged();
+    }
+
+    /**
+     * Returns true if the axis' state has just changed, i.e, it has either just been pressed,
+     * or just been released.
+     *
+     * @param axis The desired axis to read from.
+     * @return If the axis' state has just changed.
+     * @see GamepadEx#readAxis()
+     */
+    public boolean stateJustChanged(Axis axis) {
+        //noinspection DataFlowIssue
+        return axisReaders.get(axis).stateJustChanged();
+    }
+
+    /**
+     * Fetches the current gamepad button values, updating the {@link ButtonReader} objects.
+     * Call this once in your loop for
+     * {@link GamepadEx#wasJustPressed(Button) wasJustPressed(Button)},
+     * {@link GamepadEx#wasJustReleased(Button) wasJustReleased(Button)},
+     * {@link GamepadEx#isDown(Button) isDown(Button)},
+     * and {@link GamepadEx#stateJustChanged(Button) stateJustChanged(Button)} to work correctly.
+     *
+     * @see GamepadEx#readAxisAndButtons()
      */
     public void readButtons() {
-        for (Button button : buttons) {
+        for (Button button : Button.values()) {
+            //noinspection DataFlowIssue
             buttonReaders.get(button).readValue();
         }
     }
 
     /**
-     * Returns if the button is down
+     * Fetches the current gamepad axis values, updating the {@link AxisReader} objects.
+     * Call this once in your loop for
+     * {@link GamepadEx#wasJustPressed(Axis) wasJustPressed(Axis)},
+     * {@link GamepadEx#wasJustReleased(Axis) wasJustReleased(Axis)},
+     * {@link GamepadEx#isDown(Axis) isDown(Axis)},
+     * and {@link GamepadEx#stateJustChanged(Axis) stateJustChanged(Axis)} to work correctly.
      *
-     * @param button the desired button to read from
-     * @return if the button is down
+     * @see GamepadEx#readAxisAndButtons()
      */
-    public boolean isDown(Button button) {
-        return buttonReaders.get(button).isDown();
+    public void readAxis() {
+        for (Axis axis : Axis.values()) {
+            //noinspection DataFlowIssue
+            axisReaders.get(axis).readValue();
+        }
     }
 
     /**
-     * Returns if the button's state has just changed
+     * Fetches the current gamepad axis values and button values, updating the
+     * {@link AxisReader} and {@link ButtonReader} objects.
+     * Shorthand for calling {@link GamepadEx#readAxis()} and {@link GamepadEx#readButtons()}
      *
-     * @param button the desired button to read from
-     * @return if the button's state has just changed
+     * @see GamepadEx#readButtons()
+     * @see GamepadEx#readAxis()
      */
-    public boolean stateJustChanged(Button button) {
-        return buttonReaders.get(button).stateJustChanged();
+    public void readAxisAndButtons() {
+        readAxis();
+        readButtons();
     }
 
     /**
-     * @param button the matching button key to the gamepad button
-     * @return the commandable button
+     * Returns the {@link ButtonReader} corresponding to the passed enum value.
+     * @param button The {@link Button} enum value.
+     * @return The {@link ButtonReader} corresponding to the passed enum value.
+     */
+    public ButtonReader getButtonReader(Button button) {
+        return buttonReaders.get(button);
+    }
+
+    /**
+     * Returns the {@link AxisReader} corresponding to the passed enum value.
+     * @param axis The {@link Axis} enum value.
+     * @return The {@link AxisReader} corresponding to the passed enum value.
+     */
+    public AxisReader getAxisReader(Axis axis) {
+        return axisReaders.get(axis);
+    }
+
+    /**
+     * Get a {@link GamepadButton} corresponding to the Button enum value passed.
+     * Can be used to execute {@link com.arcrobotics.ftclib.command.Command Command} objects or
+     * {@link Runnable} objects on a button press.
+     *
+     * @param button The Button enum value.
+     * @return The button as a {@link GamepadButton}, which extends {@link com.arcrobotics.ftclib.command.button.Trigger Trigger}.
      */
     public GamepadButton getGamepadButton(Button button) {
         return gamepadButtons.get(button);

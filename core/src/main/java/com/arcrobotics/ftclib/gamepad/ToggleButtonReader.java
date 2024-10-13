@@ -12,8 +12,8 @@ public class ToggleButtonReader extends ButtonReader {
     /**
      * The constructor that uses the gamepad and button to refer to a certain state toggler.
      *
-     * @param gamepad the gamepad object that contains the buttonn
-     * @param button  the button on the oject
+     * @param gamepad the gamepad object that contains the button
+     * @param button  the button on the object
      */
     public ToggleButtonReader(GamepadEx gamepad, GamepadKeys.Button button) {
         super(gamepad, button);

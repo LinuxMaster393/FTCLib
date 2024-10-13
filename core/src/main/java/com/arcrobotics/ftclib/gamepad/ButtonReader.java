@@ -20,7 +20,7 @@ public class ButtonReader implements KeyReader {
     /**
      * the state of the button
      */
-    private BooleanSupplier buttonState;
+    private final BooleanSupplier buttonState;
 
     /**
      * Initializes controller variables
@@ -29,9 +29,7 @@ public class ButtonReader implements KeyReader {
      * @param button  The controller button
      **/
     public ButtonReader(GamepadEx gamepad, GamepadKeys.Button button) {
-        buttonState = () -> gamepad.getButton(button);
-        currState = buttonState.getAsBoolean();
-        lastState = currState;
+        this(() -> gamepad.getButton(button));
     }
 
     public ButtonReader(BooleanSupplier buttonValue) {
